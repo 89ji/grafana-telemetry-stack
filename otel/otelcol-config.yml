@@ -14,7 +14,7 @@ processors:
   tail_sampling:
     decision_wait: 10s          # how long to buffer spans before deciding
     num_traces: 100000          # max concurrent traces held in memory
-    expected_new_traces_per_sec: 10
+    expected_new_traces_per_sec: 100
     policies:
       - name: errors-policy
         type: status_code
@@ -29,7 +29,7 @@ processors:
       - name: baseline-sample
         type: probabilistic
         probabilistic:
-          sampling_percentage: 10
+          sampling_percentage: 100  # keep everything in dev
 
   batch:
     timeout: 5s
