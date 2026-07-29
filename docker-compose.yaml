@@ -89,3 +89,4 @@ services:
       - "${OTEL_GRPC_INGEST_PORT}:4317"
       - "${OTEL_HTTP_INGEST_PORT}:4318"
       - "${OTEL_PROM_SCRAPE_PORT}:8888"
+      - "${OTEL_SPANMETRICS_PORT:-8889}:8889"

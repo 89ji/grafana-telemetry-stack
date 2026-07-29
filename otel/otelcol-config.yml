@@ -31,9 +31,28 @@ processors:
         probabilistic:
           sampling_percentage: 100  # keep everything in dev
 
+  filter/drop_websockets:
+    spans:
+      exclude:
+        match_type: regexp
+        span_names:
+          - ".*[Ww]eb[Ss]ocket.*"
+
   batch:
     timeout: 5s
     send_batch_size: 1000
+
+connectors:
+  spanmetrics:
+    metrics_flush_interval: 15s
+    aggregation_temporality: "CUMULATIVE"
+    histogram:
+      explicit:
+        buckets: [1ms, 2ms, 5ms, 10ms, 25ms, 50ms, 100ms, 250ms, 500ms, 1s, 2.5s, 5s, 10s]
+    dimensions:
+      - name: http.request.method
+      - name: http.response.status_code
+      - name: http.route
 
 exporters:
   otlp/tempo:
@@ -43,6 +62,11 @@ exporters:
 
   otlp/loki:
     endpoint: loki:3100
+    tls:
+      insecure: true
+
+  prometheusremotewrite:
+    endpoint: "http://prometheus:9090/api/v1/write"
     tls:
       insecure: true
 
@@ -59,8 +83,13 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [memory_limiter, tail_sampling, batch]
-      exporters: [otlp/tempo]
+      processors: [memory_limiter, filter/drop_websockets, tail_sampling, batch]
+      exporters: [otlp/tempo, spanmetrics]
+
+    metrics:
+      receivers: [spanmetrics]
+      processors: [batch]
+      exporters: [prometheusremotewrite]
 
     logs:
       receivers: [otlp]
